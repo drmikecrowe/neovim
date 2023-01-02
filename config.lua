@@ -13,7 +13,7 @@ lvim.log.level = "warn"
 lvim.format_on_save.enabled = false
 lvim.colorscheme = "lunar"
 -- to disable icons and use a minimalist setup, uncomment the following
--- lvim.use_icons = false
+-- lvie.use_icons = false
 
 -- keymappings [view all the defaults by pressing <leader>Lk]
 lvim.leader = "space"
@@ -236,6 +236,39 @@ linters.setup {
 -- Additional Plugins
 lvim.plugins = {
   {
+    "kevinhwang91/nvim-bqf",
+    event = { "BufRead", "BufNew" },
+    config = function()
+      require("bqf").setup({
+        auto_enable = true,
+        preview = {
+          win_height = 12,
+          win_vheight = 12,
+          delay_syntax = 80,
+          border_chars = { "┃", "┃", "━", "━", "┏", "┓", "┗", "┛", "█" },
+        },
+        func_map = {
+          vsplit = "",
+          ptogglemode = "z,",
+          stoggleup = "",
+        },
+        filter = {
+          fzf = {
+            action_for = { ["ctrl-s"] = "split" },
+            extra_opts = { "--bind", "ctrl-o:toggle-all", "--prompt", "> " },
+          },
+        },
+      })
+    end,
+  },
+  {
+    "windwp/nvim-spectre",
+    event = "BufRead",
+    config = function()
+      require("spectre").setup()
+    end,
+  },
+  {
     "tpope/vim-fugitive",
     cmd = {
       "G",
@@ -332,8 +365,37 @@ lvim.plugins = {
       vim.o.hidden = true
       require('nvim-terminal').setup()
     end,
+  },
+  {
+    'tamago324/telescope-openbrowser.nvim',
+    requires = {
+      { 'nvim-telescope/telescope.nvim' },
+      { 'tyru/open-browser.vim' },
+    },
   }
 }
+
+local bookmarks = {}
+local plugins = require "lvim.plugins"
+for i in pairs(plugins) do
+  bookmarks[plugins[i][1]] = "https://github.com/" .. plugins[i][1]
+end
+for i in pairs(lvim.plugins) do
+  bookmarks[lvim.plugins[i][1]] = "https://github.com/" .. lvim.plugins[i][1]
+end
+local openbrowser = {
+  bookmarks = bookmarks,
+  bookmark_filepath = '~/.config/nvim/telescope_openbrowser_bookmarks'
+}
+lvim.builtin.telescope.extensions = vim.tbl_extend("keep", {
+  openbrowser = openbrowser,
+}, lvim.builtin.telescope.extensions)
+lvim.builtin.telescope.on_config_done = function()
+  lvim.builtin.which_key.mappings["L"]["p"] = { ":Telescope openbrowser list<CR>", "Plugin Github Pages" }
+  pcall(function()
+    require("telescope").load_extension "openbrowser"
+  end)
+end
 
 -- Autocommands (https://neovim.io/doc/user/autocmd.html)
 vim.api.nvim_create_autocmd("BufEnter", {
